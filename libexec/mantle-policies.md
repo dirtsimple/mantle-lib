@@ -57,7 +57,17 @@ policy::after-site() { :; }
 The DBA policy is set using the `DBA_POLICY` variable, and it defaults to the `project-db` policy.  The base class is `dba-policy`, which understands how to create and drop users and generate database passwords.
 
 ```shell
-doco.dba() { policy dba dba-command; }  # simple CLI
+doco.dba() {
+	if (($#)); then
+		if have-services ==1; then
+			target "${DOCO_SERVICES[0]}" with-env policy dba "$@"
+		elif require-services 1 dba; then
+			with-targets "${REPLY[@]}" -- doco foreach dba "$@"
+		fi
+	else
+		policy dba dba-command
+	fi
+}
 
 policy-type dba DBA_POLICY project-db
 
@@ -66,23 +76,23 @@ sql-escape() { set -- "${@//\\/\\\\}"; set -- "${@//\'/\\\'}"; REPLY=("$@"); }
 
 dba-policy::new-site() {
 	.env -f "${DEPLOY_ENV}" generate DB_PASSWORD gen-dbpass
-	! .env parse DB_USER DB_NAME DB_HOST DB_PASSWORD || local "${REPLY[@]}"
-	event on "before commands" "$this" mkuser "$DB_NAME" "$DB_USER" "$DB_PASSWORD"
+	event on "before commands" target "$SERVICE" with-env policy dba mkuser
 }
 
 dba-policy::mkuser() {
-	sql-escape "$2" "$3"
+	sql-escape "$DB_USER" "$DB_PASSWORD"
 	printf \
         "GRANT ALL PRIVILEGES ON \`%s\`.* TO '%s'@'%%' IDENTIFIED BY '%s'; FLUSH PRIVILEGES;" \
-        "$1" "${REPLY[0]}" "${REPLY[1]}" | this dba-command
+    	    "$DB_NAME" "${REPLY[0]}" "${REPLY[1]}" | this dba-command
 }
 
-dba-policy::dropuser() {
+dba-policy::drop() {
 	sql-escape "$DB_USER"
-	printf "DROP USER '%s'@'%%'; FLUSH PRIVILEGES;" "$REPLY" | this dba-command
+	printf "DROP DATABASE IF EXISTS \`%s\`; DROP USER '%s'@'%%'; FLUSH PRIVILEGES;" \
+		"$DB_NAME" "$REPLY" | this dba-command
 }
 
-dba-policy::dba-command() { fail "policy '$this needs a dba-command method"; }
+dba-policy::dba-command() { fail "policy '$DBA_POLICY' needs a dba-command method"; }
 ```
 
 ### The project-db policy
