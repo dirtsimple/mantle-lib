@@ -59,8 +59,8 @@ mantle-site() {
 	event emit "after site"
 	event emit "after site $1"
 
-	env-file -q "$DEPLOY_ENV"
 	[[ -f "$DEPLOY_ENV" ]] || new-site "$@"
+	env-file "$DEPLOY_ENV"
 }
 
 ```
@@ -71,9 +71,9 @@ mantle-site() {
 new-site() {
 	[[ -d deploy ]] || mkdir deploy || exit
 	.env -f "$DEPLOY_ENV" puts "# $SERVICE environment"
-	env-file "$DEPLOY_ENV"
 
 	# don't allow config changes in new-site event
+	eval "${env[@]@A}; ${env_files[@]@A}"  # locally clone so we can add DEPLOY_ENV later
 	readonly image env labels volumes env_files
 	event emit "new site" "$@"
 }
