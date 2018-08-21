@@ -114,13 +114,13 @@ project-db::up() {
 		fail "./deploy/mysql.env is missing its password" || return
 	local "${REPLY[@]}"  # read password
 
-	doco -- mysql exec -T mysql_config_editor set --skip-warn -G auto \
+	doco -- mysql exec -T mysql_config_editor set --skip-warn -G mantle \
 		-h localhost -u root -p <<<"$MYSQL_ROOT_PASSWORD" 2>/dev/null
 }
 
 project-db::dba-command() {
 	this up; REPLY=; [[ -t 0 && -t 1 ]] || REPLY=-T   # don't use pty unless interactive
-	doco -- mysql exec $REPLY mysql --login-path=auto mysql
+	doco -- mysql exec $REPLY mysql --login-path=mantle mysql
 }
 
 project-db::new-site() {
