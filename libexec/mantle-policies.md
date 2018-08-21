@@ -39,11 +39,11 @@ select-policy() {
 
 ```shell
 policy::init() {
-	this project-config
 	event on "before site"      "$this" before-site
 	event on "after site"       "$this" after-site
 	event on "new site"         "$this" new-site
 	event on "finalize project" "$this" finalize-config
+	this project-config
 }
 
 policy::project-config() { :; }
@@ -93,6 +93,30 @@ dba-policy::drop() {
 }
 
 dba-policy::dba-command() { fail "policy '$DBA_POLICY' needs a dba-command method"; }
+```
+
+### The external-db policy
+
+The `external-db` policy uses a database host that is not part of the project.  It requires that `DB_HOST` and `DBA_LOGIN_PATH` (a `--login-path` for the mysql CLI) be set, in order to set up databases.  The user and database names for a site are set using the site's `WP_HOME`, to ensure uniqueness.
+
+```shell
+dba.external-db() { local this=$FUNCNAME __mro__=(external-db dba-policy policy); this "$@"; }
+
+external-db::project-config() {
+	for REPLY in DB_HOST DBA_LOGIN_PATH; do
+		[[ ${!REPLY+_} ]] || fail "$REPLY must be set to use external-db policy" 78 || exit
+	done
+}
+
+external-db::dba-command() { mysql --login-path="$DBA_LOGIN_PATH" mysql; }
+
+external-db::new-site() {
+	project-name "$SERVICE"; local dbu=mantle-${REPLY%_1}
+	parse-url "$WP_HOME"; local dbn="mantle${REPLY[1]#http}-${REPLY[2]}"
+	dbn+="${REPLY[3]:+:${REPLY[3]}}${REPLY[4]:+-${REPLY[4]//\/^}}"
+	.env -f "$DEPLOY_ENV" set +DB_USER="$dbu" +DB_NAME="${dbn//./_}" +DB_HOST="$DB_HOST"
+	dba-policy::new-site "$@"
+}
 ```
 
 ### The project-db policy
