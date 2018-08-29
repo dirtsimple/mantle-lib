@@ -43,14 +43,3 @@ doco.composer() { doco asdev composer "$@"; }
 doco.imposer() { doco asdev imposer "$@"; }
 ```
 
-## Color and Paging
-
-We exetend the doco `config` and `jq` command to provide paged and colorized output, using .devkit's `tty` module.  The pager and YAML colorizer can be set using `DOCO_PAGER` and `DOCO_YAML_COLOR`.
-
-```shell
-# color & paging
-tty_prefix=DOCO_
-source .devkit/modules/tty
-doco.config()  { tty pager colorize-yaml -- compose-untargeted config  "$@"; }
-colorize-yaml() { tty-tool YAML_COLOR pygmentize -f 256 -O style=igor -l yaml; }
-```
