@@ -1,4 +1,4 @@
-FROM dirtsimple/php-server:1.3.1
+FROM dirtsimple/php-server:1.3.2
 
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community/" >> /etc/apk/repositories \
     && EXTRA_APKS="less jq nano bind-tools mysql-client py-pygments git-perl colordiff" install-extras \
