@@ -6,6 +6,9 @@
 # Exit on error
 set -euo pipefail
 
+# Ensure uploads directory is writable
+chmod -R g+w "$CODE_BASE"/public/ext/uploads
+
 # Generate initial .lock if not present
 [[ -f "$CODE_BASE/composer.lock" ]] || composer install --working-dir="$CODE_BASE" $COMPOSER_OPTIONS
 
