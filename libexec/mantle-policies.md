@@ -82,8 +82,8 @@ dba-policy::new-site() {
 dba-policy::mkuser() {
 	sql-escape "$DB_USER" "$DB_PASSWORD"
 	printf \
-        "GRANT ALL PRIVILEGES ON \`%s\`.* TO '%s'@'%%' IDENTIFIED BY '%s'; FLUSH PRIVILEGES;" \
-    	    "$DB_NAME" "${REPLY[0]}" "${REPLY[1]}" | this dba-command
+		"GRANT ALL PRIVILEGES ON \`%s\`.* TO '%s'@'%%' IDENTIFIED BY '%s'; FLUSH PRIVILEGES;" \
+		"$DB_NAME" "${REPLY[0]}" "${REPLY[1]}" | this dba-command
 }
 
 dba-policy::drop() {

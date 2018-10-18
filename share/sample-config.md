@@ -12,7 +12,7 @@ include-if-exists ~/.config/mantlerc.md
 
 ### Sites
 
-Sites are defined by calling the shell function `SITE` *servicename url environ tags...* with your desired settings and tags.  You can define sites before the tags have been defined
+Sites are defined by calling the shell function `SITE` *servicename url environ tags...* with your desired settings and tags.  (You can define sites before the tags have been defined.)
 
 ```shell
 VERSION 3.3   # docker-compose format version; must be 2 or higher
@@ -36,7 +36,7 @@ services:
   \($SERVICE):
     image: dirtsimple/mantle:latest
 ```
-You can define additional functions like this to create templates for other tags.  (You must explicitly declare any parameters other than `SITE`, `WP_ENV`, or `WP_HOME`, however.)
+You can define additional functions like this to create templates for other tags.  (You must explicitly declare any parameters other than `SERVICE`, `WP_ENV`, or `WP_HOME`, however.)
 
 If you need to do other things besides set a template, you can define a shell function instead, e.g.:
 
