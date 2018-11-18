@@ -9,5 +9,6 @@ include "libexec/mantle-api.md"
 include "libexec/mantle-cli.md"
 include "libexec/mantle-policies.md"
 include "libexec/mantle-tags.md"
+include "libexec/mantle-wp.md"
 
 

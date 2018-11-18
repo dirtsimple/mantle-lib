@@ -1,36 +1,34 @@
 ## Mantle Core API
 
-### Site Definition
+### Service Definition
 
-#### `SITE`
+#### `SERVICE`
 
 ```shell
-SITE() {
-	# Add to the --sites group and create the service target
-	GROUP --sites += "$1"
+SERVICE() {
+	# Ensure a service target exists
+	target "$1" declare-service
 
 	# parse and save the normalized URL
 	parse-url "$2" || return; set -- "$1" "$REPLY" "${@:3}"
 
 	# prep now, run later
-	if-not-in created_sites "$1" \
-		event on "finalize project" build-service "$1" mantle-site "$@"
+	if-not-in defined_services "$1" \
+		event on "finalize project" define-service "$@"
 
-	event has "finalize project" build-service "$1" mantle-site "$@" ||
-		fail "site '$1' has already been defined with different parameters"
+	event has "finalize project" define-service "$@" ||
+		fail "service '$1' has already been declared with a different URL and/or tags"
 }
 
 ```
 #### Tag Registration and Application
 
 ```shell
-declare -gA TAGGED
-
 before-tag() { event on "before tag $1" "${@:2}"; }
 after-tag()  { event on  "after tag $1" "${@:2}"; }
 
 tag-exists() { fn-exists "tag.$1" || event has "before tag $1" || event has "after tag $1"; }
-apply-tags() { for REPLY; do if-not-in TAGGED["$SERVICE"] "$REPLY" __apply_tag "$REPLY"; done; }
+apply-tags() { for REPLY; do if-new-in-array SERVICE_TAGS "$REPLY" __apply_tag "$REPLY"; done; }
 
 __apply_tag() {
 	tag-exists "$1" ||
@@ -41,65 +39,45 @@ __apply_tag() {
 
 ```
 
-#### Site Tags and Configuration
+#### Handling Newly-Created Services
 
 ```shell
-event on "before site" env-file -q ./deploy/@all.env
-
-mantle-site() {
-	local -r WP_HOME=$2 WP_ENV=$3 DEPLOY_ENV="./deploy/$1.env"
-	image="dirtsimple/mantle2:latest"
-	expose WP_HOME WP_ENV WP_ADMIN_USER WP_ADMIN_PASS
-	env[WP_ADMIN_EMAIL]=${WP_ADMIN_EMAIL:-$USER@$HOSTNAME}
-
-	event emit "before site"
-	event emit "before site $1"
-	apply-tags mantle-site "${@:3}"  # WP_ENV is also a tag
-	! fn-exists "site.$1" || "site.$1"
-	event emit "after site"
-	event emit "after site $1"
-
-	[[ -f "$DEPLOY_ENV" ]] || new-site "$@"
-	env-file "$DEPLOY_ENV"
-}
-
-```
-
-#### Handling Newly-Created Sites
-
-```shell
-new-site() {
+deploy-service() {
 	[[ -d deploy ]] || mkdir deploy || exit
 	.env -f "$DEPLOY_ENV" puts "# $SERVICE environment"
 
-	# don't allow config changes in new-site event
+	# don't allow config changes during "deploy service" event
 	eval "${env[@]@A}; ${env_files[@]@A}"  # locally clone so we can add DEPLOY_ENV later
 	readonly image env labels volumes env_files
-	event emit "new site" "$@"
-}
 
-event on "new site" generate-wp-keys
-
-generate-wp-keys() {
-	set -- AUTH SECURE_AUTH LOGGED_IN NONCE
-	.env -f "$DEPLOY_ENV"
-	while (($#)); do
-		.env generate "$1_KEY"  openssl rand -base64 48
-		.env generate "$1_SALT" openssl rand -base64 48
-		shift
-	done
+	event emit "deploy service" "$SERVICE"
+	event emit "deploy service $SERVICE"
 }
 
 ```
 
-### Service Building
+### Service Definition
 
 ```shell
-build-service() {
+define-service() {
 	SERVICES "$1"
-	local -r SERVICE=$1; local image env_files=() volumes=(); local -A env labels
-	FILTER "( . "; APPLY . SERVICE
-	"${@:2}"
+	local -r SERVICE=$1 SERVICE_URL=$2 DEPLOY_ENV="./deploy/$1.env"
+	local SERVICE_TAGS=()
+	local service_namespace image env_files=() volumes=(); local -A env labels
+	FILTER "( . "; APPLY . SERVICE SERVICE_URL
+
+	env-file -q ./deploy/@all.env
+	event emit "define service" "$SERVICE"
+	event emit "define service $SERVICE"
+
+	apply-tags "${@:3}"
+	! fn-exists "${service_namespace:-service}.$SERVICE" || "${service_namespace:-service}.$SERVICE"
+
+	event emit "defined service $SERVICE"
+	event emit "defined service" "$SERVICE"
+
+	[[ -f "$DEPLOY_ENV" ]] || deploy-service "$@"
+	env-file "$DEPLOY_ENV"
 
 	FILTER '( .services[$SERVICE] |= ( .'
 	put-string image       ${image+"$image"}
@@ -107,7 +85,6 @@ build-service() {
 	put-map    labels      labels
 	put-list   volumes     "${volumes[@]}"
 	FILTER ". )))"
-	#event on "finalize project" eval 'echo "$jqmd_filters"'
 }
 
 put-map()    {                       JSON-MAP "$2";      put-struct "$1" "$REPLY"; }
@@ -151,8 +128,11 @@ include-if-exists() { while (($#)); do [[ ! -f "$1" ]] || include "$1"; shift; d
 
 if-not-in() { local -n v=$1; [[ ${v-} != *"<$2>"* ]] || return 0; v+="<$2>"; "${@:3}"; }
 
+in-array() { local -n __inarray=$1; [[ "< ${__inarray[*]/%/ ><} " == *"< $2 >"* ]]; }
+
 if-new-in-array() {
-	local -n v=$1; [[ "< ${v[*]/%/ ><} " != *"< $2 >"* ]] || return 0; v+=("$2"); "${@:3}"
+	if in-array "$1" "$2"; then return; fi
+	local -n __inarray=$1; __inarray+=("$2"); "${@:3}"
 }
 ```
 

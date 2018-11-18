@@ -34,22 +34,26 @@ select-policy() {
 
 * an `init` that's called when the policy is selected
 * a `project-config` that's called by the default `init`
-* `before-site` and `after-site` methods that get called around each site definition
-* a `new-site` that's called when a project's deployment `.env` is created
+* `define-service` and `defined-service` methods that get called before and after each linked service definition
+* a `deploy-service` that's called when a linked service's deployment `.env` is created
 
 ```shell
 policy::init() {
-	event on "before site"      "$this" before-site
-	event on "after site"       "$this" after-site
-	event on "new site"         "$this" new-site
 	event on "finalize project" "$this" finalize-config
 	this project-config
 }
 
+policy::link-service() {
+	event on "define service $1"  "$this" define-service
+	event on "defined service $1" "$this" defined-service
+	event on "deploy service $1"  "$this" deploy-service
+}
+
 policy::project-config() { :; }
 policy::finalize-config() { :; }
-policy::before-site() { :; }
-policy::after-site() { :; }
+policy::define-service() { :; }
+policy::defined-service() { :; }
+policy::deploy-service() { :; }
 ```
 
 ## Database Administration
@@ -74,7 +78,7 @@ policy-type dba DBA_POLICY project-db
 gen-dbpass() { openssl rand -base64 18; }
 sql-escape() { set -- "${@//\\/\\\\}"; set -- "${@//\'/\\\'}"; REPLY=("$@"); }
 
-dba-policy::new-site() {
+dba-policy::deploy-service() {
 	.env -f "${DEPLOY_ENV}" generate DB_PASSWORD gen-dbpass
 	event on "before commands" target "$SERVICE" with-env policy dba mkuser
 }
@@ -97,7 +101,7 @@ dba-policy::dba-command() { fail "policy '$DBA_POLICY' needs a dba-command metho
 
 ### The external-db policy
 
-The `external-db` policy uses a database host that is not part of the project.  It requires that `DB_HOST` and `DBA_LOGIN_PATH` (a `--login-path` for the mysql CLI) be set, in order to set up databases.  The user and database names for a site are set using the site's `WP_HOME`, to ensure uniqueness.
+The `external-db` policy uses a database host that is not part of the project.  It requires that `DB_HOST` and `DBA_LOGIN_PATH` (a `--login-path` for the mysql CLI) be set, in order to set up databases.  The user and database names for a site are set using the site's `SERVICE_URL`, to ensure uniqueness.
 
 ```shell
 dba.external-db() { local this=$FUNCNAME __mro__=(external-db dba-policy policy); this "$@"; }
@@ -110,12 +114,12 @@ external-db::project-config() {
 
 external-db::dba-command() { mysql --login-path="$DBA_LOGIN_PATH" mysql; }
 
-external-db::new-site() {
+external-db::deploy-service() {
 	project-name "$SERVICE"; local dbu=mantle-${REPLY%_1}
-	parse-url "$WP_HOME"; local dbn="mantle${REPLY[1]#http}-${REPLY[2]}"
+	parse-url "$SERVICE_URL"; local dbn="mantle${REPLY[1]#http}-${REPLY[2]}"
 	dbn+="${REPLY[3]:+:${REPLY[3]}}${REPLY[4]:+-${REPLY[4]//\/^}}"
 	.env -f "$DEPLOY_ENV" set +DB_USER="$dbu" +DB_NAME="${dbn//./_}" +DB_HOST="$DB_HOST"
-	dba-policy::new-site "$@"
+	dba-policy::deploy-service "$@"
 }
 ```
 
@@ -157,9 +161,9 @@ project-db::dba-command() {
 	doco -- mysql exec $REPLY mysql --login-path=mantle mysql
 }
 
-project-db::new-site() {
+project-db::deploy-service() {
 	.env -f "$DEPLOY_ENV" set +DB_USER="$SERVICE" +DB_NAME="$SERVICE" +DB_HOST=mysql
-	dba-policy::new-site "$@"
+	dba-policy::deploy-service "$@"
 }
 ```
 
@@ -176,10 +180,10 @@ services:
       - ./deploy/db:/var/lib/mysql
 ```
 
-Each site is marked as dependent on the mysql service, so it will start if they start.
+Each linked service is marked as dependent on the mysql service, so it will start if they start.
 
-```yaml @func project-db::before-site
-# project-db::before-site
+```yaml @func project-db::define-service
+# project-db::define-service
 services:
   \($SERVICE):
     depends_on: [ mysql ]
