@@ -67,7 +67,7 @@ tag.mount-code() {
 		cd "./$SERVICE" && rm -rf .git &&
 			git init && git add . && git ci -m "New mantle site"
 	)
-	volumes+=("./$SERVICE:/var/www/html");
+	volumes["/var/www/html"]="./$SERVICE";
 	realpath.relative "$LOCO_PWD/" "$LOCO_ROOT"
 	if [[ ${REPLY}/ == "$SERVICE"/* ]]; then
 		event on "before commands" GROUP --default /= "$SERVICE"

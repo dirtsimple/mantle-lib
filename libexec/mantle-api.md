@@ -63,7 +63,7 @@ define-service() {
 	SERVICES "$1"
 	local -r SERVICE=$1 SERVICE_URL=$2 DEPLOY_ENV="./deploy/$1.env"
 	local SERVICE_TAGS=()
-	local service_namespace image env_files=() volumes=(); local -A env labels
+	local service_namespace image env_files=(); local -A env labels volumes
 	FILTER "( . "; APPLY . SERVICE SERVICE_URL
 
 	env-file -q ./deploy/@all.env
@@ -83,7 +83,8 @@ define-service() {
 	put-string image       ${image+"$image"}
 	put-map    environment env
 	put-map    labels      labels
-	put-list   volumes     "${volumes[@]}"
+	JSON-MAP "volumes"
+	put-struct volumes     "$REPLY | mantle::volume_list"
 	FILTER ". )))"
 }
 
@@ -160,13 +161,18 @@ parse-url() {
 def mantle::uninterpolate:
 	# escape '$' to prevent interpolation
     if type == "string" then
-        . / "$" | map (. + "$$") | add | .[:-2]
+        . / "$" | join("$$")
     elif type == "array" then
         map(mantle::uninterpolate)
     elif type == "object" then
         to_entries | map( .value |= mantle::uninterpolate ) | from_entries
     else .
     end
+;
+
+def mantle::volume_list:
+    # sort by mountpoint, split off flags from source, regroup as source:mount:flags
+    to_entries | sort_by(.key) | map( (.value / ":") as $a | [$a[0], .key] + $a[1:] | join(":"))
 ;
 ```
 
