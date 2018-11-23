@@ -5,14 +5,20 @@ dk use: dotenv
 on boot mantle-bootstrap
 on setup mantle-setup
 
-mantle-bootstrap() {
-	# Route in-container commands via docker-compose
-	for REPLY in imposer composer wp dba; do have "$REPLY" || catbin "$REPLY" <<-EOF
-	#!/usr/bin/env bash
-	exec doco $REPLY "\$@"
-	EOF
-	done
+on boot doco-delegate imposer
+on boot doco-delegate composer
+on boot doco-delegate wp
+on boot doco-delegate dba
 
+doco-delegate() {
+	# Route in-container commands via docker-compose
+	have "$1" || catbin "$1" <<-EOF
+	#!/usr/bin/env bash
+	exec doco $1 "\$@"
+	EOF
+}
+
+mantle-bootstrap() {
 	require-any doco github bashup/doco master bin/doco
 	require-any jq
 	require-any docker-compose
