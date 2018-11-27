@@ -69,7 +69,7 @@ doco.dba() {
 			with-targets "${REPLY[@]}" -- doco foreach dba "$@"
 		fi
 	else
-		policy dba dba-command
+		policy dba cli mysql
 	fi
 }
 
@@ -87,16 +87,19 @@ dba-policy::mkuser() {
 	sql-escape "$DB_USER" "$DB_PASSWORD"
 	printf \
 		"GRANT ALL PRIVILEGES ON \`%s\`.* TO '%s'@'%%' IDENTIFIED BY '%s'; FLUSH PRIVILEGES;" \
-		"$DB_NAME" "${REPLY[0]}" "${REPLY[1]}" | this dba-command
+		"$DB_NAME" "${REPLY[0]}" "${REPLY[1]}" | this cli mysql
 }
 
 dba-policy::drop() {
 	sql-escape "$DB_USER"
 	printf "DROP DATABASE IF EXISTS \`%s\`; DROP USER '%s'@'%%'; FLUSH PRIVILEGES;" \
-		"$DB_NAME" "$REPLY" | this dba-command
+		"$DB_NAME" "$REPLY" | this cli mysql
 }
 
 dba-policy::dba-command() { fail "policy '$DBA_POLICY' needs a dba-command method"; }
+
+dba-policy::cli() { this dba-command mysql "${1-${DB_NAME-mysql}}"; }
+dba-policy::dump() { this dba-command mysqldump --single-transaction "$@" "$DB_NAME"; }
 ```
 
 ### The external-db policy
@@ -112,7 +115,7 @@ external-db::project-config() {
 	done
 }
 
-external-db::dba-command() { mysql --login-path="$DBA_LOGIN_PATH" mysql; }
+external-db::dba-command() { "$1" --login-path="$DBA_LOGIN_PATH" "${@:2}"; }
 
 external-db::deploy-service() {
 	project-name "$SERVICE"; local dbu=mantle-${REPLY%_1}
@@ -158,7 +161,7 @@ project-db::up() {
 
 project-db::dba-command() {
 	this up; REPLY=; [[ -t 0 && -t 1 ]] || REPLY=-T   # don't use pty unless interactive
-	doco -- mysql exec $REPLY mysql --login-path=mantle mysql
+	doco -- mysql exec $REPLY "$1" --login-path=mantle "${@:2}"
 }
 
 project-db::deploy-service() {
