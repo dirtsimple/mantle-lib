@@ -6,7 +6,8 @@
 # Exit on error
 set -euo pipefail
 
-# Ensure uploads directory is writable
+# Ensure uploads directory (and all future subdirs) are writable by nginx
+chmod    g+s "$CODE_BASE"/public/ext/uploads
 chmod -R g+w "$CODE_BASE"/public/ext/uploads
 
 # Generate initial .lock if not present
