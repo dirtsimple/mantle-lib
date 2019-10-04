@@ -10,6 +10,9 @@ set -euo pipefail
 chmod    g+s "$CODE_BASE"/public/ext/uploads
 chmod -R g+w "$CODE_BASE"/public/ext/uploads
 
+# Install global tools, unless they're already part of the image
+[[ "$COMPOSER_HOME" == /composer ]] || composer global install --no-dev
+
 # Generate initial .lock if not present
 [[ -f "$CODE_BASE/composer.lock" ]] || composer install --working-dir="$CODE_BASE" $COMPOSER_OPTIONS
 

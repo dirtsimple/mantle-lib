@@ -67,6 +67,10 @@ tag.mount-code() {
 		cd "./$SERVICE" && rm -rf .git &&
 			git init && git add . && git ci -m "New mantle site"
 	)
+	[[ ! -f "$SERVICE/.composer/composer.json" ]] || {
+		# The mounted code includes its own composer home directory
+		env[COMPOSER_HOME]=/var/www/html/.composer
+	}
 	volumes["/var/www/html"]="./$SERVICE";
 	realpath.relative "$LOCO_PWD/" "$LOCO_ROOT"
 	if [[ ${REPLY}/ == "$SERVICE"/* ]]; then
