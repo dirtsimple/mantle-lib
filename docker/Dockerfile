@@ -1,4 +1,4 @@
-FROM dirtsimple/php-server:1.3.8
+FROM dirtsimple/php-server:1.3.9
 
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community/" >> /etc/apk/repositories \
     && EXTRA_APKS="less nodejs nano bind-tools mysql-client py-pygments git-perl colordiff" install-extras \
@@ -28,4 +28,3 @@ ENV IMPOSER_PLUGINS  "public/ext/plugins"
 ENV IMPOSER_VENDOR   "vendor"
 ENV IMPOSER_PACKAGES "/home/developer/.wp-cli/packages/vendor"
 ENV IMPOSER_GLOBALS  "/composer/vendor"
-

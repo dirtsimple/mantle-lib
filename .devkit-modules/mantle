@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-dk use: dotenv
-
 on boot mantle-bootstrap
 on setup mantle-setup
 
@@ -20,6 +18,7 @@ doco-delegate() {
 
 mantle-bootstrap() {
 	require-any doco github bashup/doco master bin/doco
+	require dotenv github bashup/dotenv master dotenv
 	require-any jq
 	require-any docker-compose
 	mkdir -p deploy
