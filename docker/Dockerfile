@@ -1,9 +1,7 @@
-FROM dirtsimple/php-server:1.3.9
+FROM dirtsimple/php-server:1.4.2
 
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community/" >> /etc/apk/repositories \
-    && EXTRA_APKS="less nodejs nano bind-tools mysql-client py-pygments git-perl colordiff" install-extras \
-    && composer-global  psy/psysh:@stable wp-cli/wp-cli-bundle dirtsimple/imposer:dev-master dirtsimple/postmark:dev-master \
-    && npm -g install json-diff
+RUN EXTRA_APKS="less nano bind-tools mysql-client py2-pygments git-perl colordiff" install-extras \
+    && composer-global psy/psysh:@stable wp-cli/wp-cli-bundle dirtsimple/imposer:dev-master dirtsimple/postmark:dev-master
 
 COPY mantle-startup /usr/bin/
 
