@@ -57,7 +57,11 @@ tag.routed-by-port() {
 ```shell
 tag.always-up() { FILTER '.services[$SERVICE].restart = "always"'; }
 
-tag.build-image() { FILTER '.services[$SERVICE].build.context = "docker"'; } # XXX
+tag.build-image() {
+	FILTER '.services[$SERVICE].build |= (
+		.context = "https://github.com/dirtsimple/mantle-site.git#:docker"
+	)'
+}
 
 tag.watch() { env[MODD_CONF]="modd.conf"; }
 

@@ -16,7 +16,7 @@ mantle-wp() {
 	env[WP_HOME]=$SERVICE_URL
 	env[WP_ADMIN_EMAIL]=${WP_ADMIN_EMAIL:-$USER@$HOSTNAME}
 	expose WP_ADMIN_USER WP_ADMIN_PASS
-	image="dirtsimple/mantle2:latest"
+	image="dirtsimple/mantle-site:latest"
 	service_namespace=site
 	event on "deploy service $SERVICE" generate-wp-keys
 }
