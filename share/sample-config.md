@@ -6,8 +6,8 @@ This file defines your mantle sites, and any custom tags you want to create for 
 source "mantle-lib.sh"   # load mantle's core functionality
 
 # Load site and user-level configs, if they exist
-include-if-exists /etc/mantlerc.md
-include-if-exists ~/.config/mantlerc.md
+include-if-exists /etc/mantle2rc.md
+include-if-exists ~/.config/mantle2rc.md
 ```
 
 ### Wordpress Sites
@@ -34,7 +34,7 @@ Define and document your project-specific tag functions here, e.g. `tag.mantle-s
 
 services:
   \($SERVICE):
-    image: dirtsimple/mantle2:latest
+    image: dirtsimple/mantle-site:latest
 ```
 You can define additional functions like this to create templates for other tags.  (You must explicitly declare any parameters other than `SERVICE` or `SERVICE_URL`, however.)
 
