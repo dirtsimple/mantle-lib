@@ -3,7 +3,7 @@
 This file defines your mantle sites, and any custom tags you want to create for them.  In the first part of the file, you can include any libraries or site-specific markdown modules that contain your tag definitions:
 
 ```shell
-source "libexec/mantle-lib.sh"   # load mantle's core functionality
+source "mantle-lib.sh"   # load mantle's core functionality
 
 # Load site and user-level configs, if they exist
 include-if-exists /etc/mantlerc.md

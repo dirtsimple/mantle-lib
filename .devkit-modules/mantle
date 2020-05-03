@@ -25,8 +25,10 @@ mantle-bootstrap() {
 }
 
 mantle-setup() {
+	realpath.location "$BASH_SOURCE"; set -- "$REPLY/.."
+
 	if [[ ! -f .env ]]; then
-		cp share/example.env .env
+		cp "$1"/share/example.env .env
 		echo ".env file created -- you may wish to edit it"
 		echo
 	fi
@@ -34,7 +36,7 @@ mantle-setup() {
 	REPLY=(*.doco.md)
 	if [[ $REPLY == "*.doco.md" ]]; then
 		realpath.basename "$PWD"
-		cp share/sample-config.md "$REPLY".doco.md
+		cp "$1"/share/sample-config.md "$REPLY".doco.md
 		echo -n "$REPLY.doco.md configuration file created: "
 		echo -n "Edit it to define your sites (and rename if you wish, as long "
 		echo "as it retains the .doco.md suffix)."

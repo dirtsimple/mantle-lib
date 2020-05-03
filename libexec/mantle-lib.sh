@@ -5,10 +5,12 @@
 
 source ./.envrc
 
-include "libexec/mantle-api.md"
-include "libexec/mantle-cli.md"
-include "libexec/mantle-policies.md"
-include "libexec/mantle-tags.md"
-include "libexec/mantle-wp.md"
+realpath.location "$BASH_SOURCE"; set -- "$REPLY"
+
+include "$1/mantle-api.md"
+include "$1/mantle-cli.md"
+include "$1/mantle-policies.md"
+include "$1/mantle-tags.md"
+include "$1/mantle-wp.md"
 
 

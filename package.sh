@@ -1,0 +1,1 @@
+BINS=libexec/mantle-lib.sh
