@@ -3,6 +3,7 @@
 This file defines your mantle sites, and any custom tags you want to create for them.  In the first part of the file, you can include any libraries or site-specific markdown modules that contain your tag definitions:
 
 ```shell
+source ./.envrc          # load .devkit environment, if needed
 source "mantle-lib.sh"   # load mantle's core functionality
 
 # Load site and user-level configs, if they exist
