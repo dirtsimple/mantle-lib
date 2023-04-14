@@ -61,6 +61,8 @@ policy::deploy-service() { :; }
 The DBA policy is set using the `DBA_POLICY` variable, and it defaults to the `project-db` policy.  The base class is `dba-policy`, which understands how to create and drop users and generate database passwords.
 
 ```shell
+c3::resolve dba-policy policy
+
 doco.dba() {
 	if (($#)); then
 		if have-services ==1; then
@@ -107,7 +109,8 @@ dba-policy::dump() { this dba-command mysqldump --single-transaction "$@" "$DB_N
 The `external-db` policy uses a database host that is not part of the project.  It requires that `DB_HOST` and `DBA_LOGIN_PATH` (a `--login-path` for the mysql CLI) be set, in order to set up databases.  The user and database names for a site are set using the site's `SERVICE_URL`, to ensure uniqueness.
 
 ```shell
-dba.external-db() { local this=$FUNCNAME __mro__=(external-db dba-policy policy); this "$@"; }
+c3::resolve external-db dba-policy
+dba.external-db() { local this=$FUNCNAME __class__=external-db; this "$@"; }
 
 external-db::project-config() {
 	for REPLY in DB_HOST DBA_LOGIN_PATH; do
@@ -131,7 +134,8 @@ external-db::deploy-service() {
 The `project-db` dba policy implements a project-local mysql service, making each site depend on it.  A newly generated database's name and user ID are the site's service name.
 
 ```shell
-dba.project-db() { local this=$FUNCNAME __mro__=(project-db dba-policy policy); this "$@"; }
+c3::resolve project-db dba-policy
+dba.project-db() { local this=$FUNCNAME __class__=project-db; this "$@"; }
 
 project-db::finalize-config() {
 	# Make sure we have a root password
